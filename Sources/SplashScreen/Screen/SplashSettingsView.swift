@@ -1,15 +1,18 @@
 import SwiftUI
 import PhotosUI
 
-struct SplashSettingsView: View {
+/// Settings UI for selecting splash images and animation configuration.
+public struct SplashSettingsView: View {
     @Environment(SplashImageStore.self) private var imageStore
     @Environment(\.dismiss) private var dismiss
-
+    
     @State private var photoSelection: PhotosPickerItem?
     @State private var importErrorMessage: String?
     @State private var isImporting = false
-
-    var body: some View {
+    
+    public init() {}
+    
+    public var body: some View {
         @Bindable var imageStore = imageStore
         NavigationStack {
             List {
@@ -24,7 +27,7 @@ struct SplashSettingsView: View {
                 } footer: {
                     Text("Display the logo as a solid colour, without an overlay image.")
                 }
-
+                
                 Section("Bundled Images") {
                     ForEach(imageStore.bundledAssetNames, id: \.self) { name in
                         SplashImageRow(
@@ -36,7 +39,7 @@ struct SplashSettingsView: View {
                         }
                     }
                 }
-
+                
                 Section("From Photo Library") {
                     if
                         let data = imageStore.customImageData,
@@ -50,7 +53,7 @@ struct SplashSettingsView: View {
                             imageStore.selection = .custom
                         }
                     }
-
+                    
                     let hasCustomImage = imageStore.customImageData != nil
                     PhotosPicker(
                         selection: $photoSelection,
@@ -63,7 +66,7 @@ struct SplashSettingsView: View {
                         )
                     }
                     .disabled(isImporting)
-
+                    
                     if isImporting {
                         HStack {
                             ProgressView()
@@ -72,20 +75,20 @@ struct SplashSettingsView: View {
                         }
                     }
                 }
-
+                
                 Section("Animation") {
                     Picker("Type", selection: $imageStore.animationType) {
                         ForEach(SplashAnimationType.allCases) { type in
                             Text(type.displayName).tag(type)
                         }
                     }
-
+                    
                     Picker("Timing", selection: $imageStore.timingCurve) {
                         ForEach(SplashTimingCurve.allCases) { curve in
                             Text(curve.displayName).tag(curve)
                         }
                     }
-
+                    
                     AnimationSliderRow(
                         title: "Duration",
                         value: $imageStore.animationDuration,
@@ -93,7 +96,7 @@ struct SplashSettingsView: View {
                         format: .number.precision(.fractionLength(2)),
                         unit: "s"
                     )
-
+                    
                     AnimationSliderRow(
                         title: "Delay",
                         value: $imageStore.animationDelay,
@@ -101,14 +104,14 @@ struct SplashSettingsView: View {
                         format: .number.precision(.fractionLength(2)),
                         unit: "s"
                     )
-
+                    
                     AnimationSliderRow(
                         title: "Final Width Fraction",
                         value: $imageStore.finalWidthFraction,
                         range: 0.1...1.0,
                         format: .number.precision(.fractionLength(2))
                     )
-
+                    
                     AnimationSliderRow(
                         title: "Max Final Width",
                         value: $imageStore.maxFinalWidth,
@@ -116,7 +119,7 @@ struct SplashSettingsView: View {
                         format: .number.precision(.fractionLength(0)),
                         unit: "pt"
                     )
-
+                    
                     AnimationSliderRow(
                         title: "Start Width Multiplier",
                         value: $imageStore.startWidthMultiplier,
@@ -125,7 +128,7 @@ struct SplashSettingsView: View {
                         unit: "×"
                     )
                 }
-
+                
                 Section("Tint Colors") {
                     ColorPicker("Light Mode Tint", selection: $imageStore.lightTintColor, supportsOpacity: true)
                     ColorPicker("Dark Mode Tint", selection: $imageStore.darkTintColor, supportsOpacity: true)
@@ -155,7 +158,7 @@ struct SplashSettingsView: View {
             }
         }
     }
-
+    
     private func importSelectedPhoto() async {
         guard let item = photoSelection else { return }
         isImporting = true
@@ -176,7 +179,7 @@ private struct SplashImageRow: View {
     let image: Image?
     let isSelected: Bool
     let action: () -> Void
-
+    
     var body: some View {
         Button(action: action) {
             HStack {
@@ -184,7 +187,7 @@ private struct SplashImageRow: View {
                     if let image {
                         image
                             .resizable()
-
+                        
                     } else {
                         ZStack {
                             Rectangle()
@@ -197,12 +200,12 @@ private struct SplashImageRow: View {
                 }
                 .frame(width: 64, height: 64)
                 .clipShape(.rect(cornerRadius: 8))
-
+                
                 Text(title)
                     .foregroundStyle(.primary)
-
+                
                 Spacer()
-
+                
                 if isSelected {
                     Image(systemName: "checkmark.circle.fill")
                         .foregroundStyle(.tint)
@@ -222,7 +225,7 @@ private struct AnimationSliderRow<V: BinaryFloatingPoint>: View where V.Stride: 
     let range: ClosedRange<V>
     let format: FloatingPointFormatStyle<Double>
     var unit: String = ""
-
+    
     var body: some View {
         VStack(alignment: .leading) {
             HStack {

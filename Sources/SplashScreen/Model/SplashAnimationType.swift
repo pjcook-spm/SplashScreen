@@ -1,16 +1,16 @@
 import Foundation
 
 /// Identifies the animation style used by the splash screen.
-enum SplashAnimationType: String, CaseIterable, Identifiable, Codable {
+public enum SplashAnimationType: String, CaseIterable, Identifiable, Codable {
     case scale
     case wipe
-
-    var id: String { rawValue }
-
-    var displayName: String {
+    
+    public var id: String { rawValue }
+    
+    public var displayName: String {
         switch self {
-        case .scale: "Scale"
-        case .wipe: "Wipe"
+            case .scale: "Scale"
+            case .wipe: "Wipe"
         }
     }
 }

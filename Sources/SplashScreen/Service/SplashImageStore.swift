@@ -3,19 +3,20 @@ import SwiftUI
 @MainActor
 @Observable
 public final class SplashImageStore {
-
-    let imageCatalog: SplashImageCatalog
-
-    var bundledAssetNames: [String] {
+    
+    public let imageCatalog: SplashImageCatalog
+    
+    public var bundledAssetNames: [String] {
         imageCatalog.bundledAssetNames
     }
-
-    func displayName(for assetName: String) -> String {
+    
+    /// Returns a display label for the given bundled asset name.
+    public func displayName(for assetName: String) -> String {
         imageCatalog.displayName(for: assetName)
     }
-
-    static let customImageFileName = "custom_splash_image.png"
-
+    
+    public static let customImageFileName = "custom_splash_image.png"
+    
     private let selectionDefaultsKey = "SplashImageStore.selection"
     private let animationTypeDefaultsKey = "SplashImageStore.animationType"
     private let timingCurveDefaultsKey = "SplashImageStore.timingCurve"
@@ -26,76 +27,77 @@ public final class SplashImageStore {
     private let startWidthMultiplierDefaultsKey = "SplashImageStore.startWidthMultiplier"
     private let lightTintColorDefaultsKey = "SplashImageStore.lightTintColor"
     private let darkTintColorDefaultsKey = "SplashImageStore.darkTintColor"
-
-    var selection: SplashImageSelection {
+    
+    public var selection: SplashImageSelection {
         didSet { persistSelection() }
     }
-
+    
     /// Raw bytes of the user's custom image, if one has been imported.
-    private(set) var customImageData: Data?
-
+    public private(set) var customImageData: Data?
+    
     /// Determines how the splash logo is animated in.
-    var animationType: SplashAnimationType {
+    public var animationType: SplashAnimationType {
         didSet { UserDefaults.standard.set(animationType.rawValue, forKey: animationTypeDefaultsKey) }
     }
-
+    
     /// Timing curve applied to the splash animation's progress.
-    var timingCurve: SplashTimingCurve {
+    public var timingCurve: SplashTimingCurve {
         didSet { UserDefaults.standard.set(timingCurve.rawValue, forKey: timingCurveDefaultsKey) }
     }
-
+    
     /// How long the splash logo animation plays for.
-    var animationDuration: TimeInterval {
+    public var animationDuration: TimeInterval {
         didSet { UserDefaults.standard.set(animationDuration, forKey: animationDurationDefaultsKey) }
     }
-
+    
     /// How long to wait before starting the splash logo animation.
-    var animationDelay: TimeInterval {
+    public var animationDelay: TimeInterval {
         didSet { UserDefaults.standard.set(animationDelay, forKey: animationDelayDefaultsKey) }
     }
-
+    
     /// Fraction of the container width the logo settles to at the end of the animation.
-    var finalWidthFraction: CGFloat {
+    public var finalWidthFraction: CGFloat {
         didSet { UserDefaults.standard.set(finalWidthFraction, forKey: finalWidthFractionDefaultsKey) }
     }
-
+    
     /// Hard ceiling, in points, that the final logo width is clamped to.
-    var maxFinalWidth: CGFloat {
+    public var maxFinalWidth: CGFloat {
         didSet { UserDefaults.standard.set(maxFinalWidth, forKey: maxFinalWidthDefaultsKey) }
     }
-
+    
     /// Multiplier applied to the largest screen dimension to derive the logo's starting width.
-    var startWidthMultiplier: CGFloat {
+    public var startWidthMultiplier: CGFloat {
         didSet { UserDefaults.standard.set(startWidthMultiplier, forKey: startWidthMultiplierDefaultsKey) }
     }
-
+    
     /// Tint color applied to the splash image in Light appearance.
-    var lightTintColor: Color {
+    public var lightTintColor: Color {
         didSet {
             if let data = try? NSKeyedArchiver.archivedData(withRootObject: UIColor(lightTintColor), requiringSecureCoding: false) {
                 UserDefaults.standard.set(data, forKey: lightTintColorDefaultsKey)
             }
         }
     }
-
+    
     /// Tint color applied to the splash image in Dark appearance.
-    var darkTintColor: Color {
+    public var darkTintColor: Color {
         didSet {
             if let data = try? NSKeyedArchiver.archivedData(withRootObject: UIColor(darkTintColor), requiringSecureCoding: false) {
                 UserDefaults.standard.set(data, forKey: darkTintColorDefaultsKey)
             }
         }
     }
-
+    
     /// Path used to mask the splash image. Override to use a different logo silhouette.
-    var logoPath: Path = Logo.path
-
-    func tintColor(for colorScheme: ColorScheme) -> Color {
+    public var logoPath: Path = Logo.path
+    
+    /// Resolves the active tint color for the provided color scheme.
+    public func tintColor(for colorScheme: ColorScheme) -> Color {
         colorScheme == .dark ? darkTintColor : lightTintColor
     }
-
+    
     /// The aspectRatio of the Logo image
-    var gradientImageAspectRatio: CGFloat {
+    public var gradientImageAspectRatio: CGFloat {
         guard
             let size = currentImageSize,
             size.height > 0
@@ -104,23 +106,23 @@ public final class SplashImageStore {
         }
         return size.width / size.height
     }
-
-    func nativeAspectRatio(for path: Path) -> CGFloat {
+    
+    public func nativeAspectRatio(for path: Path) -> CGFloat {
         let bounds = path.boundingRect
         return bounds.width / bounds.height
     }
-
+    
     /// Bumped to signal that the splash animation should play again from the start. Used for testing
-    private(set) var animationRestartToken = UUID()
-
+    public private(set) var animationRestartToken = UUID()
+    
     /// Creates a splash image store, optionally with a custom bundled image catalog.
     public
     init(imageCatalog: SplashImageCatalog = .default) {
         self.imageCatalog = imageCatalog
-
+        
         let fallbackSelection = imageCatalog.bundledAssetNames.first.map(SplashImageSelection.asset) ?? .noOverlay
         let defaults = UserDefaults.standard
-
+        
         if
             let data = defaults.data(forKey: selectionDefaultsKey),
             let decoded = try? JSONDecoder().decode(
@@ -132,7 +134,7 @@ public final class SplashImageStore {
         } else {
             self.selection = fallbackSelection
         }
-
+        
         if
             let raw = defaults.string(forKey: animationTypeDefaultsKey),
             let decoded = SplashAnimationType(rawValue: raw)
@@ -141,7 +143,7 @@ public final class SplashImageStore {
         } else {
             self.animationType = .scale
         }
-
+        
         if
             let raw = defaults.string(forKey: timingCurveDefaultsKey),
             let decoded = SplashTimingCurve(rawValue: raw)
@@ -150,37 +152,37 @@ public final class SplashImageStore {
         } else {
             self.timingCurve = .linear
         }
-
+        
         self.animationDuration = defaults.object(forKey: animationDurationDefaultsKey) as? TimeInterval ?? 1.0
         self.animationDelay = defaults.object(forKey: animationDelayDefaultsKey) as? TimeInterval ?? 0.0
         self.finalWidthFraction = defaults.object(forKey: finalWidthFractionDefaultsKey) as? CGFloat ?? 0.6
         self.maxFinalWidth = defaults.object(forKey: maxFinalWidthDefaultsKey) as? CGFloat ?? 350
         self.startWidthMultiplier = defaults.object(forKey: startWidthMultiplierDefaultsKey) as? CGFloat ?? 2
-
+        
         if let data = defaults.data(forKey: lightTintColorDefaultsKey),
            let uiColor = try? NSKeyedUnarchiver.unarchivedObject(ofClass: UIColor.self, from: data) {
             self.lightTintColor = Color(uiColor)
         } else {
             self.lightTintColor = .primary
         }
-
+        
         if let data = defaults.data(forKey: darkTintColorDefaultsKey),
            let uiColor = try? NSKeyedUnarchiver.unarchivedObject(ofClass: UIColor.self, from: data) {
             self.darkTintColor = Color(uiColor)
         } else {
             self.darkTintColor = .primary
         }
-
+        
         let url = Self.customImageURL
         if FileManager.default.fileExists(atPath: url.path(percentEncoded: false)) {
             self.customImageData = try? Data(contentsOf: url)
         }
-
+        
         // Fall back to a bundled asset if the custom file went missing.
         if case .custom = self.selection, customImageData == nil {
             self.selection = fallbackSelection
         }
-
+        
         if
             case .asset(let selectedAssetName) = self.selection,
             !imageCatalog.bundledAssetNames.contains(selectedAssetName)
@@ -188,23 +190,25 @@ public final class SplashImageStore {
             self.selection = fallbackSelection
         }
     }
-
-    static var customImageURL: URL {
+    
+    public static var customImageURL: URL {
         URL.documentsDirectory.appending(path: customImageFileName)
     }
-
-    func setCustomImage(data: Data) throws {
+    
+    /// Sets a custom splash image from raw data and persists it to disk.
+    public func setCustomImage(data: Data) throws {
         try data.write(to: Self.customImageURL, options: .atomic)
         customImageData = data
         selection = .custom
     }
-
-    func restartAnimation() {
+    
+    /// Forces the splash animation to restart on observing views.
+    public func restartAnimation() {
         animationRestartToken = UUID()
     }
-
+    
     /// The image currently chosen for the splash screen, or `nil` if it can't be resolved.
-    var currentImage: Image? {
+    public var currentImage: Image? {
         switch selection {
             case .noOverlay:
                 return nil
@@ -217,9 +221,9 @@ public final class SplashImageStore {
                 return Image(uiImage: uiImage)
         }
     }
-
+    
     /// Native pixel size of the current image, used to derive the gradient aspect ratio.
-    var currentImageSize: CGSize? {
+    public var currentImageSize: CGSize? {
         switch selection {
             case .noOverlay:
                 return nil
@@ -230,7 +234,7 @@ public final class SplashImageStore {
                 return UIImage(data: data)?.size
         }
     }
-
+    
     private func persistSelection() {
         guard let data = try? JSONEncoder().encode(selection) else { return }
         UserDefaults.standard.set(data, forKey: selectionDefaultsKey)
