@@ -2,6 +2,8 @@
 
 A SwiftUI package for rendering a logo-masked splash screen with configurable animation, optional image overlays, and runtime settings UI.
 
+By default, the splash mask uses `Logo.path`, and you can now override it via `SplashImageStore(logoPath:)`.
+
 ## What it does
 
 - Draws a vector logo mask (`Logo.path`) and reveals it using animation.
@@ -62,7 +64,8 @@ struct DemoApp: App {
                 "SplashGradientB": "Sunset"
             ],
             bundle: .main
-        )
+        ),
+        logoPath: Logo.path
     )
 
     var body: some Scene {
@@ -90,6 +93,15 @@ struct DemoApp: App {
 - `finalWidthFraction`, `maxFinalWidth`, `startWidthMultiplier`
 - `lightTintColor`, `darkTintColor`
 - `logoPath` override for custom logo silhouettes
+
+Custom logo path example:
+
+```swift
+let customStore = SplashImageStore(
+    imageCatalog: .default,
+    logoPath: MyBrandLogo.path
+)
+```
 
 Additional public helpers:
 
