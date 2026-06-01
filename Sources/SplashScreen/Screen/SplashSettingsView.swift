@@ -32,7 +32,7 @@ public struct SplashSettingsView: View {
                     ForEach(imageStore.bundledAssetNames, id: \.self) { name in
                         SplashImageRow(
                             title: imageStore.displayName(for: name),
-                            image: Image(name),
+                            image: Image(name, bundle: imageStore.imageCatalog.bundle),
                             isSelected: imageStore.selection == .asset(name)
                         ) {
                             imageStore.selection = .asset(name)
