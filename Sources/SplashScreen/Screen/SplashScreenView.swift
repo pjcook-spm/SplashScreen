@@ -4,15 +4,15 @@ import SwiftUI
 public struct SplashScreenView: View {
     @Environment(SplashImageStore.self) private var imageStore
     @Environment(\.colorScheme) private var colorScheme
-    
+
     @State private var startDate = Date()
-    
+
     private struct LogoLayout {
         let frameWidth: CGFloat
         let frameHeight: CGFloat
         let revealWidth: CGFloat
     }
-    
+
     private func logoLayout(
         at date: Date,
         startWidth: CGFloat,
@@ -24,7 +24,7 @@ public struct SplashScreenView: View {
             elapsed: elapsed,
             duration: imageStore.animationDuration
         )
-        
+
         switch imageStore.animationType {
             case .scale:
                 // Spring overshoot can drive the interpolated width below zero when
@@ -44,40 +44,40 @@ public struct SplashScreenView: View {
                 )
         }
     }
-    
+
     public init() {}
-    
+
     public var body: some View {
         GeometryReader { geo in
-            
+
             let maxDimension = max(geo.size.width, geo.size.height)
-            
+
             // Final width tracks the container width up to a hard ceiling.
             let finalWidth = min(
                 geo.size.width * imageStore.finalWidthFraction,
                 imageStore.maxFinalWidth
             )
-            
+
             // Start scaled relative to the largest screen dimension.
             let startWidth = maxDimension * imageStore.startWidthMultiplier
-            
+
             let finalHeight = finalWidth / imageStore.gradientImageAspectRatio
-            
+
             TimelineView(.animation) { timeline in
-                
+
                 let layout = logoLayout(
                     at: timeline.date,
                     startWidth: startWidth,
                     finalWidth: finalWidth,
                     finalHeight: finalHeight
                 )
-                
+
                 Canvas { context, size in
-                    
+
                     guard let symbol = context.resolveSymbol(id: 1) else {
                         return
                     }
-                    
+
                     context.draw(
                         symbol,
                         at: CGPoint(
@@ -91,6 +91,7 @@ public struct SplashScreenView: View {
                     LogoMaskImage(
                         image: imageStore.currentImage,
                         logoPath: imageStore.logoPath,
+                        logoMaskImage: imageStore.logoMaskImage,
                         frameWidth: layout.frameWidth,
                         frameHeight: layout.frameHeight,
                         revealWidth: layout.revealWidth,
@@ -136,11 +137,9 @@ public struct SplashScreenView: View {
         }
         .ignoresSafeArea()
     }
-    
 }
 
 #Preview {
     SplashScreenView()
         .environment(SplashImageStore())
 }
-

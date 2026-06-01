@@ -3,14 +3,15 @@ import SwiftUI
 /// Renders the splash image clipped to the logo path and revealed to `revealWidth`.
 /// When `image` is `nil`, the logo is filled with `Color.primary` instead.
 struct LogoMaskImage: View {
-
+    
     let image: Image?
     let logoPath: Path
+    let logoMaskImage: Image?
     let frameWidth: CGFloat
     let frameHeight: CGFloat
     let revealWidth: CGFloat
     var tintColor: Color? = nil
-
+    
     var body: some View {
         Group {
             if let image {
@@ -24,11 +25,19 @@ struct LogoMaskImage: View {
         }
         .frame(width: frameWidth, height: frameHeight)
         .mask {
-            SplashLogoShape(logoPath: logoPath)
-                .mask(alignment: .leading) {
-                    Rectangle()
-                        .frame(width: revealWidth)
+            Group {
+                if let logoMaskImage {
+                    logoMaskImage
+                        .resizable()
+                        .scaledToFit()
+                } else {
+                    SplashLogoShape(logoPath: logoPath)
                 }
+            }
+            .mask(alignment: .leading) {
+                Rectangle()
+                    .frame(width: revealWidth)
+            }
         }
     }
 }
