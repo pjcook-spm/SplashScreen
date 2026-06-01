@@ -105,12 +105,15 @@ Additional public helpers:
 
 ## Testing
 
-Run tests with Swift Package Manager:
+`swift test` is not the right workflow for this iOS-only package. Run tests against an iOS Simulator destination instead.
 
 ```bash
 cd /Users/pj/Development/SplashScreen
-swift test
+xcrun simctl list devices available | grep "iPhone"
+xcodebuild test -scheme SplashScreen -destination 'id=<SIMULATOR_ID>'
 ```
+
+You can also run tests directly in Xcode by opening the package and running the `SplashScreen` scheme.
 
 ## License
 
