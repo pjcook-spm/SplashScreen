@@ -105,37 +105,21 @@ public final class SplashImageStore {
         return Image(logoMaskAssetName, bundle: imageCatalog.bundle)
     }
 
+    /// The aspectRatio of the Logo image
     public var logoMaskImageAspectRatio: CGFloat {
-        guard
-            let logoMaskAssetName,
-            let image = UIImage(named: logoMaskAssetName, in: imageCatalog.bundle, with: nil)
-        else {
-            return gradientImageAspectRatio
+        if let logoMaskAssetName,
+           let image = UIImage(named: logoMaskAssetName, in: imageCatalog.bundle, with: nil) {
+            let size = image.size
+            return size.width / size.height
         }
-        let size = image.size
+
+        let size = logoPath.boundingRect.size
         return size.width / size.height
     }
 
     /// Resolves the active tint color for the provided color scheme.
     public func tintColor(for colorScheme: ColorScheme) -> Color {
         colorScheme == .dark ? darkTintColor : lightTintColor
-    }
-    
-    /// The aspectRatio of the Logo image
-    public var gradientImageAspectRatio: CGFloat {
-        guard
-            let size = currentImageSize,
-            size.height > 0
-        else {
-            if
-                let logoMaskImageSize,
-                logoMaskImageSize.height > 0
-            {
-                return logoMaskImageSize.width / logoMaskImageSize.height
-            }
-            return nativeAspectRatio(for: logoPath)
-        }
-        return size.width / size.height
     }
     
     /// Native pixel size of the logo-mask asset image, if configured and available.

@@ -330,7 +330,7 @@ struct SplashModelTests {
             logoPath: customPath
         )
 
-        let result = sut.gradientImageAspectRatio
+        let result = sut.logoMaskImageAspectRatio
 
         #expect(result == 2.5)
     }
