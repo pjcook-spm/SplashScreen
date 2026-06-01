@@ -91,7 +91,7 @@ public final class SplashImageStore {
     }
 
     /// Path used to mask the splash image. Override to use a different logo silhouette.
-    public var logoPath: Path = Logo.path
+    public let logoPath: Path
 
     /// Resolves the active tint color for the provided color scheme.
     public func tintColor(for colorScheme: ColorScheme) -> Color {
@@ -118,12 +118,13 @@ public final class SplashImageStore {
     public private(set) var animationRestartToken = UUID()
 
     /// Creates a splash image store, optionally with a custom bundled image catalog.
-    public
-    init(
+    public init(
         imageCatalog: SplashImageCatalog = .default,
         userDefaults: UserDefaults = .standard,
-        customImageURL: URL? = nil
+        customImageURL: URL? = nil,
+        logoPath: Path? = nil
     ) {
+        self.logoPath = logoPath ?? Logo.path
         self.imageCatalog = imageCatalog
         self.defaults = userDefaults
         self.customImageURL = customImageURL ?? SplashImageStore.customImageURL
