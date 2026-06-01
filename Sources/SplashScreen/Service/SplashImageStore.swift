@@ -104,7 +104,18 @@ public final class SplashImageStore {
         guard let logoMaskAssetName else { return nil }
         return Image(logoMaskAssetName, bundle: imageCatalog.bundle)
     }
-    
+
+    public var logoMaskImageAspectRatio: CGFloat {
+        guard
+            let logoMaskAssetName,
+            let image = UIImage(named: logoMaskAssetName, in: imageCatalog.bundle, with: nil)
+        else {
+            return gradientImageAspectRatio
+        }
+        let size = image.size
+        return size.width / size.height
+    }
+
     /// Resolves the active tint color for the provided color scheme.
     public func tintColor(for colorScheme: ColorScheme) -> Color {
         colorScheme == .dark ? darkTintColor : lightTintColor

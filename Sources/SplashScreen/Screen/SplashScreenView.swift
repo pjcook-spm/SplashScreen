@@ -33,7 +33,7 @@ public struct SplashScreenView: View {
                 let width = max(0, startWidth + ((finalWidth - startWidth) * progress))
                 return LogoLayout(
                     frameWidth: width,
-                    frameHeight: width / imageStore.gradientImageAspectRatio,
+                    frameHeight: width / imageStore.logoMaskImageAspectRatio,
                     revealWidth: width
                 )
             case .wipe:
@@ -61,7 +61,7 @@ public struct SplashScreenView: View {
             // Start scaled relative to the largest screen dimension.
             let startWidth = maxDimension * imageStore.startWidthMultiplier
 
-            let finalHeight = finalWidth / imageStore.gradientImageAspectRatio
+            let finalHeight = finalWidth / imageStore.logoMaskImageAspectRatio
 
             TimelineView(.animation) { timeline in
 

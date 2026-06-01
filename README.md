@@ -2,7 +2,7 @@
 
 A SwiftUI package for rendering a logo-masked splash screen with configurable animation, optional image overlays, and runtime settings UI.
 
-By default, the splash mask uses `Logo.path`. You can replace it with an asset-catalog image via `SplashImageCatalog.logoMaskAssetName`, or override with an explicit vector path via `SplashImageStore(logoPath:)`.
+By default, the splash mask uses `Logo.path`. You can replace it with an asset-catalog image via `SplashImageCatalog.logoMaskAssetName`, or override with an explicit vector path via `SplashImageStore(logoPath:)`. The image asset that you use for `logoMaskAssetName` much be a transparent `PNG`.
 
 ## What it does
 
