@@ -11,6 +11,7 @@ public struct SplashScreenView: View {
         let frameWidth: CGFloat
         let frameHeight: CGFloat
         let revealWidth: CGFloat
+        let opacity: CGFloat
     }
 
     private func logoLayout(
@@ -34,13 +35,29 @@ public struct SplashScreenView: View {
                 return LogoLayout(
                     frameWidth: width,
                     frameHeight: width / imageStore.logoMaskImageAspectRatio,
-                    revealWidth: width
+                    revealWidth: width,
+                    opacity: 1
                 )
             case .wipe:
                 return LogoLayout(
                     frameWidth: finalWidth,
                     frameHeight: finalHeight,
-                    revealWidth: max(0, finalWidth * progress)
+                    revealWidth: max(0, finalWidth * progress),
+                    opacity: 1
+                )
+            case .fadeIn:
+                return LogoLayout(
+                    frameWidth: finalWidth,
+                    frameHeight: finalHeight,
+                    revealWidth: finalWidth,
+                    opacity: max(0, min(1, progress))
+                )
+            case .fadeOut:
+                return LogoLayout(
+                    frameWidth: finalWidth,
+                    frameHeight: finalHeight,
+                    revealWidth: finalWidth,
+                    opacity: max(0, min(1, 1 - progress))
                 )
         }
     }
@@ -97,6 +114,7 @@ public struct SplashScreenView: View {
                         revealWidth: layout.revealWidth,
                         tintColor: tint
                     )
+                    .opacity(layout.opacity)
                     .tag(1)
                 }
                 .frame(

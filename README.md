@@ -7,7 +7,7 @@ By default, the splash mask uses `Logo.path`. You can replace it with an asset-c
 ## What it does
 
 - Draws a vector logo mask (`Logo.path`) and reveals it using animation.
-- Supports two reveal styles: `scale` and `wipe`.
+- Supports four animation types: `scale`, `wipe`, `fadeIn`, and `fadeOut`.
 - Supports multiple timing curves, including spring curves.
 - Lets users pick from bundled images, no overlay, or a custom photo.
 - Persists splash configuration in `UserDefaults` and custom image data in Documents.
@@ -87,7 +87,7 @@ struct DemoApp: App {
 ## Configuration options in `SplashImageStore`
 
 - `selection`: no overlay, bundled asset, or custom photo
-- `animationType`: scale or wipe
+- `animationType`: scale, wipe, fade-in, or fade-out
 - `timingCurve`: linear/ease/spring presets
 - `animationDuration` and `animationDelay`
 - `finalWidthFraction`, `maxFinalWidth`, `startWidthMultiplier`

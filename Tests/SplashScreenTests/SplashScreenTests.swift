@@ -38,12 +38,26 @@ struct SplashModelTests {
     func animationTypeDisplayNamesMatchExpectedValues() {
         let scale = SplashAnimationType.scale
         let wipe = SplashAnimationType.wipe
+        let fadeIn = SplashAnimationType.fadeIn
+        let fadeOut = SplashAnimationType.fadeOut
 
         let scaleName = scale.displayName
         let wipeName = wipe.displayName
+        let fadeInName = fadeIn.displayName
+        let fadeOutName = fadeOut.displayName
 
         #expect(scaleName == "Scale")
         #expect(wipeName == "Wipe")
+        #expect(fadeInName == "Fade In")
+        #expect(fadeOutName == "Fade Out")
+    }
+
+    @Test("Animation type exposes fade-in and fade-out options for settings picker")
+    func animationTypeAllCasesContainFadeVariants() {
+        let sut = SplashAnimationType.allCases
+
+        #expect(sut.contains(.fadeIn))
+        #expect(sut.contains(.fadeOut))
     }
 
     @Test("Image catalog returns custom display name when mapped")
@@ -191,7 +205,7 @@ struct SplashModelTests {
             customImageURL: customImageURL
         )
 
-        firstStore.animationType = .wipe
+        firstStore.animationType = .fadeOut
         firstStore.timingCurve = .easeInOut
         firstStore.animationDuration = 2.5
         firstStore.animationDelay = 0.4
@@ -205,7 +219,7 @@ struct SplashModelTests {
             customImageURL: customImageURL
         )
 
-        #expect(sut.animationType == .wipe)
+        #expect(sut.animationType == .fadeOut)
         #expect(sut.timingCurve == .easeInOut)
         #expect(sut.animationDuration == 2.5)
         #expect(sut.animationDelay == 0.4)
