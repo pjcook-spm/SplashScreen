@@ -6,6 +6,9 @@ public struct SplashScreenView: View {
     @Environment(\.colorScheme) private var colorScheme
 
     @State private var startDate = Date()
+    @State private var hasReportedCompletion = false
+
+    public let onAnimationCompleted: @MainActor () -> Void
 
     private struct LogoLayout {
         let frameWidth: CGFloat
@@ -62,7 +65,25 @@ public struct SplashScreenView: View {
         }
     }
 
-    public init() {}
+    public init(onAnimationCompleted: @escaping @MainActor () -> Void = {}) {
+        self.onAnimationCompleted = onAnimationCompleted
+    }
+
+    private func resetAnimation() {
+        startDate = Date()
+        hasReportedCompletion = false
+    }
+
+    private func reportAnimationCompletionIfNeeded(at date: Date) {
+        guard hasReportedCompletion == false else { return }
+
+        let completionTime = max(0, imageStore.animationDelay) + max(0, imageStore.animationDuration)
+        let elapsedSinceStart = date.timeIntervalSince(startDate)
+        guard elapsedSinceStart >= completionTime else { return }
+
+        hasReportedCompletion = true
+        onAnimationCompleted()
+    }
 
     public var body: some View {
         GeometryReader { geo in
@@ -121,36 +142,39 @@ public struct SplashScreenView: View {
                     width: geo.size.width,
                     height: geo.size.height
                 )
+                .onChange(of: timeline.date, initial: true) { _, newDate in
+                    reportAnimationCompletionIfNeeded(at: newDate)
+                }
             }
             .onAppear {
-                startDate = Date()
+                resetAnimation()
             }
             .onChange(of: imageStore.selection) {
-                startDate = Date()
+                resetAnimation()
             }
             .onChange(of: imageStore.animationDuration) {
-                startDate = Date()
+                resetAnimation()
             }
             .onChange(of: imageStore.animationDelay) {
-                startDate = Date()
+                resetAnimation()
             }
             .onChange(of: imageStore.finalWidthFraction) {
-                startDate = Date()
+                resetAnimation()
             }
             .onChange(of: imageStore.maxFinalWidth) {
-                startDate = Date()
+                resetAnimation()
             }
             .onChange(of: imageStore.startWidthMultiplier) {
-                startDate = Date()
+                resetAnimation()
             }
             .onChange(of: imageStore.animationType) {
-                startDate = Date()
+                resetAnimation()
             }
             .onChange(of: imageStore.timingCurve) {
-                startDate = Date()
+                resetAnimation()
             }
             .onChange(of: imageStore.animationRestartToken) {
-                startDate = Date()
+                resetAnimation()
             }
         }
         .ignoresSafeArea()
