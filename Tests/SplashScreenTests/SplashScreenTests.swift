@@ -6,60 +6,80 @@ import Testing
 @Suite("Splash model behavior")
 struct SplashModelTests {
     // MARK: - Happy paths
-
+    
     @Test("Linear progress is clamped to one when elapsed exceeds duration")
     func linearProgressClampsToOne() {
         let sut = SplashTimingCurve.linear
-
+        
         let result = sut.progress(elapsed: 2.0, duration: 1.0)
-
+        
         #expect(result == 1)
     }
-
+    
     @Test("Linear progress returns fractional value when elapsed is within duration")
     func linearProgressReturnsFractionalValue() {
         let sut = SplashTimingCurve.linear
-
+        
         let result = sut.progress(elapsed: 0.25, duration: 1.0)
-
+        
         #expect(result == 0.25)
     }
-
+    
     @Test("Ease-in-out starts at zero progress when elapsed is zero")
     func zeroElapsedReturnsZero() {
         let sut = SplashTimingCurve.easeInOut
-
+        
         let result = sut.progress(elapsed: 0, duration: 1.0)
-
+        
         #expect(result == 0)
     }
-
+    
     @Test("Animation type display names are stable for UI labels")
     func animationTypeDisplayNamesMatchExpectedValues() {
         let scale = SplashAnimationType.scale
         let wipe = SplashAnimationType.wipe
         let fadeIn = SplashAnimationType.fadeIn
         let fadeOut = SplashAnimationType.fadeOut
-
+        
         let scaleName = scale.displayName
         let wipeName = wipe.displayName
         let fadeInName = fadeIn.displayName
         let fadeOutName = fadeOut.displayName
-
+        
         #expect(scaleName == "Scale")
         #expect(wipeName == "Wipe")
         #expect(fadeInName == "Fade In")
         #expect(fadeOutName == "Fade Out")
     }
-
+    
     @Test("Animation type exposes fade-in and fade-out options for settings picker")
     func animationTypeAllCasesContainFadeVariants() {
         let sut = SplashAnimationType.allCases
-
+        
         #expect(sut.contains(.fadeIn))
         #expect(sut.contains(.fadeOut))
     }
-
+    
+    @Test("Animation type can combine multiple effects and produce a composed display name")
+    func animationTypeSupportsCombinedEffects() {
+        let sut: SplashAnimationType = [.scale, .fadeIn]
+        
+        #expect(sut.contains(.scale))
+        #expect(sut.contains(.fadeIn))
+        #expect(sut.contains(.fadeOut) == false)
+        #expect(sut.displayName == "Scale + Fade In")
+    }
+    
+    @Test("Animation type codable round-trip preserves combined effects")
+    func animationTypeCodableRoundTripForCombinedEffects() throws {
+        let sut: SplashAnimationType = [.wipe, .fadeOut]
+        
+        let encoded = try JSONEncoder().encode(sut)
+        let decoded = try JSONDecoder().decode(SplashAnimationType.self, from: encoded)
+        
+        #expect(decoded == [.wipe, .fadeOut])
+    }
+    
     @Test("Image catalog returns custom display name when mapped")
     func imageCatalogReturnsMappedDisplayName() {
         let sut = SplashImageCatalog(
@@ -67,12 +87,12 @@ struct SplashModelTests {
             displayNames: ["logo_a": "Logo A"],
             bundle: .main
         )
-
+        
         let result = sut.displayName(for: "logo_a")
-
+        
         #expect(result == "Logo A")
     }
-
+    
     @Test("Image catalog stores optional logo mask asset name for silhouette overrides")
     func imageCatalogStoresLogoMaskAssetName() {
         let sut = SplashImageCatalog(
@@ -81,101 +101,101 @@ struct SplashModelTests {
             bundle: .main,
             logoMaskAssetName: "brand_mark"
         )
-
+        
         #expect(sut.logoMaskAssetName == "brand_mark")
     }
-
+    
     @Test("Image selection codable round-trip preserves associated asset value")
     func imageSelectionCodableRoundTripForAssetCase() throws {
         let sut = SplashImageSelection.asset("brand_hero")
-
+        
         let encoded = try JSONEncoder().encode(sut)
         let decoded = try JSONDecoder().decode(SplashImageSelection.self, from: encoded)
-
+        
         #expect(decoded == .asset("brand_hero"))
     }
-
+    
     @MainActor
     @Test("Store reload restores a previously selected bundled asset using isolated defaults")
     func storeReloadRestoresSelectedBundledAsset() {
         let suiteName = "SplashModelTests.\(#function).\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: suiteName)!
         defaults.removePersistentDomain(forName: suiteName)
-
+        
         let customImageURL = URL.temporaryDirectory.appending(path: "\(UUID().uuidString).png")
         defer {
             defaults.removePersistentDomain(forName: suiteName)
             try? FileManager.default.removeItem(at: customImageURL)
         }
-
+        
         let firstStore = buildSplashImageStore(
             bundledAssetNames: ["alpha", "beta"],
             userDefaults: defaults,
             customImageURL: customImageURL
         )
-
+        
         firstStore.selection = .asset("beta")
-
+        
         let sut = buildSplashImageStore(
             bundledAssetNames: ["alpha", "beta"],
             userDefaults: defaults,
             customImageURL: customImageURL
         )
-
+        
         #expect(sut.selection == .asset("beta"))
     }
-
+    
     @MainActor
     @Test("Setting a custom image persists bytes and restores custom selection on reload")
     func setCustomImagePersistsDataAndSelection() throws {
         let suiteName = "SplashModelTests.\(#function).\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: suiteName)!
         defaults.removePersistentDomain(forName: suiteName)
-
+        
         let customImageURL = URL.temporaryDirectory.appending(path: "\(UUID().uuidString).png")
         defer {
             defaults.removePersistentDomain(forName: suiteName)
             try? FileManager.default.removeItem(at: customImageURL)
         }
-
+        
         let firstStore = buildSplashImageStore(
             bundledAssetNames: ["alpha"],
             userDefaults: defaults,
             customImageURL: customImageURL
         )
-
+        
         let payload = Data([0x01, 0x02, 0x03, 0x04])
         try firstStore.setCustomImage(data: payload)
-
+        
         let sut = buildSplashImageStore(
             bundledAssetNames: ["alpha"],
             userDefaults: defaults,
             customImageURL: customImageURL
         )
-
+        
         #expect(sut.selection == .custom)
         #expect(sut.customImageData == payload)
     }
-
+    
     @MainActor
     @Test("Store uses documented default animation and layout settings when defaults are empty")
     func storeUsesDocumentedDefaultSettings() {
         let suiteName = "SplashModelTests.\(#function).\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: suiteName)!
         defaults.removePersistentDomain(forName: suiteName)
-
+        
         let customImageURL = URL.temporaryDirectory.appending(path: "\(UUID().uuidString).png")
         defer {
             defaults.removePersistentDomain(forName: suiteName)
             try? FileManager.default.removeItem(at: customImageURL)
         }
-
+        
         let sut = buildSplashImageStore(
             bundledAssetNames: ["default_asset"],
             userDefaults: defaults,
             customImageURL: customImageURL
         )
-
+        
         #expect(sut.selection == .asset("default_asset"))
         #expect(sut.animationType == .scale)
         #expect(sut.timingCurve == .linear)
@@ -185,26 +205,26 @@ struct SplashModelTests {
         #expect(sut.maxFinalWidth == 350)
         #expect(sut.startWidthMultiplier == 2)
     }
-
+    
     @MainActor
     @Test("Store reload restores persisted animation and size settings from isolated defaults")
     func storeReloadRestoresPersistedAnimationAndSizeSettings() {
         let suiteName = "SplashModelTests.\(#function).\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: suiteName)!
         defaults.removePersistentDomain(forName: suiteName)
-
+        
         let customImageURL = URL.temporaryDirectory.appending(path: "\(UUID().uuidString).png")
         defer {
             defaults.removePersistentDomain(forName: suiteName)
             try? FileManager.default.removeItem(at: customImageURL)
         }
-
+        
         let firstStore = buildSplashImageStore(
             bundledAssetNames: ["alpha"],
             userDefaults: defaults,
             customImageURL: customImageURL
         )
-
+        
         firstStore.animationType = .fadeOut
         firstStore.timingCurve = .easeInOut
         firstStore.animationDuration = 2.5
@@ -212,13 +232,13 @@ struct SplashModelTests {
         firstStore.finalWidthFraction = 0.73
         firstStore.maxFinalWidth = 420
         firstStore.startWidthMultiplier = 3.2
-
+        
         let sut = buildSplashImageStore(
             bundledAssetNames: ["alpha"],
             userDefaults: defaults,
             customImageURL: customImageURL
         )
-
+        
         #expect(sut.animationType == .fadeOut)
         #expect(sut.timingCurve == .easeInOut)
         #expect(sut.animationDuration == 2.5)
@@ -227,42 +247,72 @@ struct SplashModelTests {
         #expect(sut.maxFinalWidth == 420)
         #expect(sut.startWidthMultiplier == 3.2)
     }
-
+    
+    @MainActor
+    @Test("Store reload restores combined animation effects from isolated defaults")
+    func storeReloadRestoresCombinedAnimationEffects() {
+        let suiteName = "SplashModelTests.\(#function).\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defaults.removePersistentDomain(forName: suiteName)
+        
+        let customImageURL = URL.temporaryDirectory.appending(path: "\(UUID().uuidString).png")
+        defer {
+            defaults.removePersistentDomain(forName: suiteName)
+            try? FileManager.default.removeItem(at: customImageURL)
+        }
+        
+        let firstStore = buildSplashImageStore(
+            bundledAssetNames: ["alpha"],
+            userDefaults: defaults,
+            customImageURL: customImageURL
+        )
+        
+        firstStore.animationType = [.scale, .fadeOut]
+        
+        let sut = buildSplashImageStore(
+            bundledAssetNames: ["alpha"],
+            userDefaults: defaults,
+            customImageURL: customImageURL
+        )
+        
+        #expect(sut.animationType == [.scale, .fadeOut])
+    }
+    
     @MainActor
     @Test("Store defaults to no overlay when bundled catalog is empty")
     func storeDefaultsToNoOverlayWhenCatalogIsEmpty() {
         let suiteName = "SplashModelTests.\(#function).\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: suiteName)!
         defaults.removePersistentDomain(forName: suiteName)
-
+        
         let customImageURL = URL.temporaryDirectory.appending(path: "\(UUID().uuidString).png")
         defer {
             defaults.removePersistentDomain(forName: suiteName)
             try? FileManager.default.removeItem(at: customImageURL)
         }
-
+        
         let sut = buildSplashImageStore(
             bundledAssetNames: [],
             userDefaults: defaults,
             customImageURL: customImageURL
         )
-
+        
         #expect(sut.selection == .noOverlay)
     }
-
+    
     @MainActor
     @Test("Store exposes injected logo path for custom silhouette rendering")
     func storeUsesInjectedLogoPath() {
         let suiteName = "SplashModelTests.\(#function).\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: suiteName)!
         defaults.removePersistentDomain(forName: suiteName)
-
+        
         let customImageURL = URL.temporaryDirectory.appending(path: "\(UUID().uuidString).png")
         defer {
             defaults.removePersistentDomain(forName: suiteName)
             try? FileManager.default.removeItem(at: customImageURL)
         }
-
+        
         let expectedPath = buildRectLogoPath(width: 240, height: 80)
         let sut = buildSplashImageStore(
             bundledAssetNames: ["default_asset"],
@@ -270,46 +320,46 @@ struct SplashModelTests {
             customImageURL: customImageURL,
             logoPath: expectedPath
         )
-
+        
         #expect(sut.logoPath.boundingRect == expectedPath.boundingRect)
     }
-
+    
     @MainActor
     @Test("Store resolves logo mask asset from catalog when no explicit path override is provided")
     func storeResolvesLogoMaskAssetNameFromCatalog() {
         let suiteName = "SplashModelTests.\(#function).\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: suiteName)!
         defaults.removePersistentDomain(forName: suiteName)
-
+        
         let customImageURL = URL.temporaryDirectory.appending(path: "\(UUID().uuidString).png")
         defer {
             defaults.removePersistentDomain(forName: suiteName)
             try? FileManager.default.removeItem(at: customImageURL)
         }
-
+        
         let sut = buildSplashImageStore(
             bundledAssetNames: ["default_asset"],
             userDefaults: defaults,
             customImageURL: customImageURL,
             logoMaskAssetName: "brand_mark"
         )
-
+        
         #expect(sut.logoMaskAssetName == "brand_mark")
     }
-
+    
     @MainActor
     @Test("Explicit logo path override disables catalog logo mask asset usage")
     func explicitLogoPathDisablesCatalogLogoMaskAsset() {
         let suiteName = "SplashModelTests.\(#function).\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: suiteName)!
         defaults.removePersistentDomain(forName: suiteName)
-
+        
         let customImageURL = URL.temporaryDirectory.appending(path: "\(UUID().uuidString).png")
         defer {
             defaults.removePersistentDomain(forName: suiteName)
             try? FileManager.default.removeItem(at: customImageURL)
         }
-
+        
         let expectedPath = buildRectLogoPath(width: 100, height: 40)
         let sut = buildSplashImageStore(
             bundledAssetNames: ["default_asset"],
@@ -318,24 +368,24 @@ struct SplashModelTests {
             logoPath: expectedPath,
             logoMaskAssetName: "brand_mark"
         )
-
+        
         #expect(sut.logoMaskAssetName == nil)
         #expect(sut.logoPath.boundingRect == expectedPath.boundingRect)
     }
-
+    
     @MainActor
     @Test("Gradient aspect ratio falls back to the logo path when no image is selected")
     func gradientAspectRatioFallsBackToLogoPathWhenImageIsUnavailable() {
         let suiteName = "SplashModelTests.\(#function).\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: suiteName)!
         defaults.removePersistentDomain(forName: suiteName)
-
+        
         let customImageURL = URL.temporaryDirectory.appending(path: "\(UUID().uuidString).png")
         defer {
             defaults.removePersistentDomain(forName: suiteName)
             try? FileManager.default.removeItem(at: customImageURL)
         }
-
+        
         let customPath = buildRectLogoPath(width: 300, height: 120)
         let sut = buildSplashImageStore(
             bundledAssetNames: [],
@@ -343,23 +393,23 @@ struct SplashModelTests {
             customImageURL: customImageURL,
             logoPath: customPath
         )
-
+        
         let result = sut.logoMaskImageAspectRatio
-
+        
         #expect(result == 2.5)
     }
-
+    
     // MARK: - Un-happy paths
-
+    
     @Test("Any curve returns one progress when duration is non-positive")
     func nonPositiveDurationReturnsOne() {
         let sut = SplashTimingCurve.bouncySpring
-
+        
         let result = sut.progress(elapsed: 0.4, duration: 0)
-
+        
         #expect(result == 1)
     }
-
+    
     @Test("Image catalog falls back to asset name when no display mapping exists")
     func imageCatalogFallsBackToRawAssetName() {
         let sut = SplashImageCatalog(
@@ -367,69 +417,69 @@ struct SplashModelTests {
             displayNames: [:],
             bundle: .main
         )
-
+        
         let result = sut.displayName(for: "logo_b")
-
+        
         #expect(result == "logo_b")
     }
-
+    
     @MainActor
     @Test("Store falls back to first bundled asset when persisted selection references missing asset")
     func storeFallsBackWhenPersistedAssetIsMissing() {
         let suiteName = "SplashModelTests.\(#function).\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: suiteName)!
         defaults.removePersistentDomain(forName: suiteName)
-
+        
         let customImageURL = URL.temporaryDirectory.appending(path: "\(UUID().uuidString).png")
         defer {
             defaults.removePersistentDomain(forName: suiteName)
             try? FileManager.default.removeItem(at: customImageURL)
         }
-
+        
         let originalStore = buildSplashImageStore(
             bundledAssetNames: ["legacy_asset"],
             userDefaults: defaults,
             customImageURL: customImageURL
         )
-
+        
         originalStore.selection = .asset("legacy_asset")
-
+        
         let sut = buildSplashImageStore(
             bundledAssetNames: ["new_default", "new_alt"],
             userDefaults: defaults,
             customImageURL: customImageURL
         )
-
+        
         #expect(sut.selection == .asset("new_default"))
     }
-
+    
     @MainActor
     @Test("Store falls back from custom selection when custom image file is missing")
     func storeFallsBackWhenCustomSelectionHasNoBackingFile() {
         let suiteName = "SplashModelTests.\(#function).\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: suiteName)!
         defaults.removePersistentDomain(forName: suiteName)
-
+        
         let customImageURL = URL.temporaryDirectory.appending(path: "\(UUID().uuidString).png")
         defer {
             defaults.removePersistentDomain(forName: suiteName)
             try? FileManager.default.removeItem(at: customImageURL)
         }
-
+        
         let originalStore = buildSplashImageStore(
             bundledAssetNames: ["fallback"],
             userDefaults: defaults,
             customImageURL: customImageURL
         )
-
+        
         originalStore.selection = .custom
-
+        
         let sut = buildSplashImageStore(
             bundledAssetNames: ["fallback"],
             userDefaults: defaults,
             customImageURL: customImageURL
         )
-
+        
         #expect(sut.selection == .asset("fallback"))
         #expect(sut.customImageData == nil)
     }
@@ -448,23 +498,23 @@ private extension SplashModelTests {
             bundledAssetNames: bundledAssetNames,
             logoMaskAssetName: logoMaskAssetName
         )
-
+        
         let sut = SplashImageStore(
             imageCatalog: imageCatalog,
             userDefaults: userDefaults,
             customImageURL: customImageURL,
             logoPath: logoPath
         )
-
+        
         return sut
     }
-
+    
     func buildRectLogoPath(width: CGFloat, height: CGFloat) -> Path {
         Path { path in
             path.addRect(CGRect(x: 0, y: 0, width: width, height: height))
         }
     }
-
+    
     func buildSplashImageCatalog(
         bundledAssetNames: [String],
         logoMaskAssetName: String? = nil

@@ -29,40 +29,45 @@ public struct SplashScreenView: View {
             duration: imageStore.animationDuration
         )
 
-        switch imageStore.animationType {
-            case .scale:
-                // Spring overshoot can drive the interpolated width below zero when
-                // shrinking from a large start to a small final; clamp to keep the
-                // frame dimensions valid.
-                let width = max(0, startWidth + ((finalWidth - startWidth) * progress))
-                return LogoLayout(
-                    frameWidth: width,
-                    frameHeight: width / imageStore.logoMaskImageAspectRatio,
-                    revealWidth: width,
-                    opacity: 1
-                )
-            case .wipe:
-                return LogoLayout(
-                    frameWidth: finalWidth,
-                    frameHeight: finalHeight,
-                    revealWidth: max(0, finalWidth * progress),
-                    opacity: 1
-                )
-            case .fadeIn:
-                return LogoLayout(
-                    frameWidth: finalWidth,
-                    frameHeight: finalHeight,
-                    revealWidth: finalWidth,
-                    opacity: max(0, min(1, progress))
-                )
-            case .fadeOut:
-                return LogoLayout(
-                    frameWidth: finalWidth,
-                    frameHeight: finalHeight,
-                    revealWidth: finalWidth,
-                    opacity: max(0, min(1, 1 - progress))
-                )
+        let clampedProgress = max(0, min(1, progress))
+        let animationType = imageStore.animationType
+
+        // Spring overshoot can drive the interpolated width below zero when shrinking.
+        let frameWidth: CGFloat
+        if animationType.contains(.scale) {
+            frameWidth = max(0, startWidth + ((finalWidth - startWidth) * progress))
+        } else {
+            frameWidth = finalWidth
         }
+
+        let frameHeight: CGFloat
+        if animationType.contains(.scale) {
+            frameHeight = frameWidth / imageStore.logoMaskImageAspectRatio
+        } else {
+            frameHeight = finalHeight
+        }
+
+        let revealWidth: CGFloat
+        if animationType.contains(.wipe) {
+            revealWidth = max(0, min(frameWidth, frameWidth * clampedProgress))
+        } else {
+            revealWidth = frameWidth
+        }
+
+        var opacity: CGFloat = 1
+        if animationType.contains(.fadeIn) {
+            opacity *= clampedProgress
+        }
+        if animationType.contains(.fadeOut) {
+            opacity *= (1 - clampedProgress)
+        }
+
+        return LogoLayout(
+            frameWidth: frameWidth,
+            frameHeight: frameHeight,
+            revealWidth: revealWidth,
+            opacity: opacity
+        )
     }
 
     public init(onAnimationCompleted: @escaping @MainActor () -> Void = {}) {

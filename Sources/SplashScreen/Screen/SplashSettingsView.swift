@@ -5,13 +5,13 @@ import PhotosUI
 public struct SplashSettingsView: View {
     @Environment(SplashImageStore.self) private var imageStore
     @Environment(\.dismiss) private var dismiss
-    
+
     @State private var photoSelection: PhotosPickerItem?
     @State private var importErrorMessage: String?
     @State private var isImporting = false
-    
+
     public init() {}
-    
+
     public var body: some View {
         @Bindable var imageStore = imageStore
         NavigationStack {
@@ -27,7 +27,7 @@ public struct SplashSettingsView: View {
                 } footer: {
                     Text("Display the logo as a solid colour, without an overlay image.")
                 }
-                
+
                 Section("Bundled Images") {
                     ForEach(imageStore.bundledAssetNames, id: \.self) { name in
                         SplashImageRow(
@@ -39,7 +39,7 @@ public struct SplashSettingsView: View {
                         }
                     }
                 }
-                
+
                 Section("From Photo Library") {
                     if
                         let data = imageStore.customImageData,
@@ -53,7 +53,7 @@ public struct SplashSettingsView: View {
                             imageStore.selection = .custom
                         }
                     }
-                    
+
                     let hasCustomImage = imageStore.customImageData != nil
                     PhotosPicker(
                         selection: $photoSelection,
@@ -66,7 +66,7 @@ public struct SplashSettingsView: View {
                         )
                     }
                     .disabled(isImporting)
-                    
+
                     if isImporting {
                         HStack {
                             ProgressView()
@@ -75,20 +75,27 @@ public struct SplashSettingsView: View {
                         }
                     }
                 }
-                
+
                 Section("Animation") {
-                    Picker("Type", selection: $imageStore.animationType) {
-                        ForEach(SplashAnimationType.allCases) { type in
-                            Text(type.displayName).tag(type)
+                    ForEach(SplashAnimationType.allCases, id: \.rawValue) { type in
+                        AnimationTypeRow(
+                            title: type.displayName,
+                            isSelected: imageStore.animationType.contains(type)
+                        ) {
+                            if imageStore.animationType.contains(type) {
+                                imageStore.animationType.remove(type)
+                            } else {
+                                imageStore.animationType.insert(type)
+                            }
                         }
                     }
-                    
+
                     Picker("Timing", selection: $imageStore.timingCurve) {
                         ForEach(SplashTimingCurve.allCases) { curve in
                             Text(curve.displayName).tag(curve)
                         }
                     }
-                    
+
                     AnimationSliderRow(
                         title: "Duration",
                         value: $imageStore.animationDuration,
@@ -96,7 +103,7 @@ public struct SplashSettingsView: View {
                         format: .number.precision(.fractionLength(2)),
                         unit: "s"
                     )
-                    
+
                     AnimationSliderRow(
                         title: "Delay",
                         value: $imageStore.animationDelay,
@@ -104,14 +111,14 @@ public struct SplashSettingsView: View {
                         format: .number.precision(.fractionLength(2)),
                         unit: "s"
                     )
-                    
+
                     AnimationSliderRow(
                         title: "Final Width Fraction",
                         value: $imageStore.finalWidthFraction,
                         range: 0.1...1.0,
                         format: .number.precision(.fractionLength(2))
                     )
-                    
+
                     AnimationSliderRow(
                         title: "Max Final Width",
                         value: $imageStore.maxFinalWidth,
@@ -119,7 +126,7 @@ public struct SplashSettingsView: View {
                         format: .number.precision(.fractionLength(0)),
                         unit: "pt"
                     )
-                    
+
                     AnimationSliderRow(
                         title: "Start Width Multiplier",
                         value: $imageStore.startWidthMultiplier,
@@ -128,7 +135,7 @@ public struct SplashSettingsView: View {
                         unit: "×"
                     )
                 }
-                
+
                 Section("Tint Colors") {
                     ColorPicker("Light Mode Tint", selection: $imageStore.lightTintColor, supportsOpacity: true)
                     ColorPicker("Dark Mode Tint", selection: $imageStore.darkTintColor, supportsOpacity: true)
@@ -158,7 +165,7 @@ public struct SplashSettingsView: View {
             }
         }
     }
-    
+
     private func importSelectedPhoto() async {
         guard let item = photoSelection else { return }
         isImporting = true
@@ -179,7 +186,7 @@ private struct SplashImageRow: View {
     let image: Image?
     let isSelected: Bool
     let action: () -> Void
-    
+
     var body: some View {
         Button(action: action) {
             HStack {
@@ -187,7 +194,7 @@ private struct SplashImageRow: View {
                     if let image {
                         image
                             .resizable()
-                        
+
                     } else {
                         ZStack {
                             Rectangle()
@@ -200,12 +207,12 @@ private struct SplashImageRow: View {
                 }
                 .frame(width: 64, height: 64)
                 .clipShape(.rect(cornerRadius: 8))
-                
+
                 Text(title)
                     .foregroundStyle(.primary)
-                
+
                 Spacer()
-                
+
                 if isSelected {
                     Image(systemName: "checkmark.circle.fill")
                         .foregroundStyle(.tint)
@@ -225,7 +232,7 @@ private struct AnimationSliderRow<V: BinaryFloatingPoint>: View where V.Stride: 
     let range: ClosedRange<V>
     let format: FloatingPointFormatStyle<Double>
     var unit: String = ""
-    
+
     var body: some View {
         VStack(alignment: .leading) {
             HStack {
@@ -242,6 +249,31 @@ private struct AnimationSliderRow<V: BinaryFloatingPoint>: View where V.Stride: 
             Slider(value: $value, in: range)
                 .accessibilityLabel(title)
         }
+    }
+}
+
+private struct AnimationTypeRow: View {
+    let title: String
+    let isSelected: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack {
+                Text(title)
+                    .foregroundStyle(.primary)
+
+                Spacer()
+
+                if isSelected {
+                    Image(systemName: "checkmark")
+                        .foregroundStyle(.tint)
+                }
+            }
+            .contentShape(.rect)
+        }
+        .buttonStyle(.plain)
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 }
 
